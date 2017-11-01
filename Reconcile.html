@@ -1,0 +1,204 @@
+<html>
+<body>
+<table cellpadding="10">
+<tr>
+<td><b>Bank Dates</b></td><td><textarea id="bankDates" rows="10" cols="20"></textarea></td>
+<td><b>Bank Values</b></td><td><textarea id="bankValues" rows="10" cols="20"></textarea></td>
+</tr>
+<tr>
+<td><b>QBO Dates</b></td><td><textarea id="qboDates" rows="10" cols="20"></textarea></td>
+<td><b>QBO Values</b></td><td><textarea id="qboValues" rows="10" cols="20"></textarea></td>
+</tr>
+<tr>
+<td colspan="4"><button style="width: 100%; height: 50px;" onclick="go()"><b>Go</b></button></td>
+</tr>
+</table>
+<div id="results"></div>
+<script type="text/javascript">
+let dates1 = [];
+let array1 = [];
+
+let dates2 = [];
+let array2 = [];
+
+let map1 = [];
+let map2 = [];
+
+function createDate(date) {
+  let parts = date.split("/");
+  if(parts[2].length === 2) {
+    parts[2] = "20" + parts[2];
+  }
+  return new Date(parts[2], parseInt(parts[0], 10) - 1, parts[1], 0, 0, 0, 0);
+}
+
+function createMap(map, array, dates, startIndex, depth, depthLimit, mapValues, mapDates) {
+	depth++;
+	for(let i = startIndex; i < array.length && map.length < 100000; i++) {
+  	mapValues.push(array[i]);
+    mapDates.push(dates[i]);
+    if(depth < depthLimit) {
+    	createMap(map, array, dates, i + 1, depth, depthLimit, mapValues, mapDates);
+    } else {
+    	map.push({
+      	values: mapValues.slice(),
+        dates: mapDates.slice()
+      });
+    }
+    mapValues.pop();
+    mapDates.pop();
+  }
+}
+
+function createMapMetaData(map) {
+  for(let i = 0; i < map.length; i++) {
+  	let sum = 0;
+    let firstDate = new Date(3000, 1, 1, 1, 1, 1, 1);
+    let lastDate = new Date(0);
+    for(let j = 0; j < map[i].values.length; j++) {
+    	sum = ((sum * 100) + (map[i].values[j] * 100)) / 100;
+      let newDate = createDate(map[i].dates[j]);
+      if(newDate < firstDate) {
+        firstDate = newDate;
+      }
+      if(newDate > lastDate) {
+        lastDate = newDate;
+      }
+    }
+    map[i].sum = sum;
+    map[i].firstDate = firstDate;
+    map[i].lastDate = lastDate;
+  }
+}
+
+function isValid(bankDates, bankValues, qboDates, qboValues) {
+    let total = 0;
+    for(let i = 0; i < bankValues.length; i++) {
+        let bankDate = createDate(bankDates[i]);
+        total = ((total * 100) + (bankValues[i] * 100)) / 100;
+        let sum = 0;
+        for(let j = 0; j < qboValues.length; j++) {
+            let qboDate = createDate(qboDates[j]);
+            if(qboDate <= bankDate) {
+                sum = ((sum * 100) + (qboValues[j] * 100)) / 100;
+            }
+        }
+        if(sum < total) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function printMatches(iStart, iEnd, jStart, jEnd, increment) {
+  let count = 0;
+  let output = "<table border='1' cellpadding='10'><tr><td><b>Bank Dates</b></td><td><b>Bank Values</b></td><td><b>QBO Dates</b></td><td><b>QBO Valules</b></td><td><b>Reconcile?</b></td></tr>";
+  for (let i = iStart; i != iEnd && count < 10; i += increment) {
+    for (let j = jStart; j != jEnd && count < 10; j += increment) {
+      if (map1[i].sum === map2[j].sum && map1[i].firstDate >= map2[j].firstDate && map1[i].lastDate >= map2[j].lastDate && isValid(map1[i].dates, map1[i].values, map2[j].dates, map2[j].values)) {
+        console.log(map1[i].values, map2[j].values);
+        output += "<tr><td>" + map1[i].dates.join("<br>") + "</td><td>" + map1[i].values.join("<br>") + "</td>";
+        output += "<td>" + map2[j].dates.join("<br>") + "</td><td>" + map2[j].values.join("<br>") + "</td>";
+        output += "<td><button onclick='reconcile(\"" + map1[i].dates.toString() + "\", \"" + map1[i].values.toString() + "\", \"" + map2[j].dates.toString() + "\", \"" + map2[j].values.toString() + "\")'>Reconcile</button></td></tr>";
+        count++;
+      }
+    }
+  }
+  output += "</table>";
+  document.getElementById("results").innerHTML = output;
+}
+
+function go() {
+
+    document.getElementById("results").innerHTML = "Loading...";
+
+    console.log(document.getElementById("bankDates").value.split("\n"));
+    console.log(document.getElementById("bankValues").value.split("\n").map(function(value) {
+        return parseFloat(value.replace(",", ""));
+    }));
+    console.log(document.getElementById("qboDates").value.split("\n"));
+    console.log(document.getElementById("qboValues").value.split("\n").map(function(value) {
+        return parseFloat(value.replace(",", ""));
+    }));
+    
+    dates1 = document.getElementById("bankDates").value.split("\n");
+    array1 = document.getElementById("bankValues").value.split("\n").map(function(value) {
+        return parseFloat(value.replace(",", ""));
+    });
+    
+    dates2 = document.getElementById("qboDates").value.split("\n");
+    array2 = document.getElementById("qboValues").value.split("\n").map(function(value) {
+        return parseFloat(value.replace(",", ""));
+    });
+    
+    map1 = [];
+    map2 = [];
+    
+    setTimeout(analyze, 100);
+}
+
+function reconcile(bankDates, bankValues, qboDates, qboValues) {    
+
+    document.getElementById("results").innerHTML = "Loading...";
+    
+    bankDates = bankDates.split(",");
+    bankValues = bankValues.split(",").map(function(value) {
+        return parseFloat(value.replace(",", ""));
+    });
+    qboDates = qboDates.split(",");
+    qboValues = qboValues.split(",").map(function(value) {
+        return parseFloat(value.replace(",", ""));
+    });
+    
+    console.log(bankDates);
+    console.log(bankValues);
+    console.log(qboDates);
+    console.log(qboValues);
+    
+    for(let i = 0; i < bankDates.length; i++) {
+        for(let j = 0; j < dates1.length; j++) {
+            if(bankDates[i] === dates1[j] && bankValues[i] === array1[j]) {
+                dates1.splice(j, 1);
+                array1.splice(j, 1);
+                break;
+            }
+        }
+    }
+    for(let i = 0; i < qboDates.length; i++) {
+        for(let j = 0; j < dates2.length; j++) {
+            if(qboDates[i] === dates2[j] && qboValues[i] === array2[j]) {
+                dates2.splice(j, 1);
+                array2.splice(j, 1);
+                break;
+            }
+        }
+    }
+    
+    map1 = [];
+    map2 = [];
+
+    setTimeout(analyze, 100);
+}
+
+function analyze() {
+
+    for(let i = 1; i <= 10; i++) {
+      createMap(map1, array1, dates1, 0, 0, i, [], []);
+      createMap(map2, array2, dates2, 0, 0, i, [], []);
+    }
+    createMapMetaData(map1);
+    createMapMetaData(map2);
+
+    console.log(map1);
+    console.log(map2);
+
+    console.log("********** printing small subsets **********");
+    printMatches(0, map1.length, 0, map2.length, 1);
+
+    console.log("********** complete **********");
+}
+
+
+</script>
+</body>
+</html>
