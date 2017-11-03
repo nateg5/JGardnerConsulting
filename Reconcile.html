@@ -10,11 +10,12 @@
 <td><b>QBO Values</b></td><td><textarea id="qboValues" rows="10" cols="20"></textarea></td>
 </tr>
 <tr>
-<td><b>Limit</b></td>
+<td><b>Speed</b></td>
 <td>
 <select id="performanceLimit" style="width: 100%">
-<option value="10000">10000 (Fast)</option>
-<option value="100000">100000 (Slow)</option>
+<option value="1000">Flash (Less Accurate)</option>
+<option value="10000" selected>Fast</option>
+<option value="100000">Slow (More Accurate)</option>
 </select>
 </td>
 </tr>
@@ -104,8 +105,8 @@ function isValid(bankDates, bankValues, qboDates, qboValues) {
 function printMatches(iStart, iEnd, jStart, jEnd, increment) {
   let count = 0;
   let output = "<table border='1' cellpadding='10'><tr><td><b>Bank Dates</b></td><td><b>Bank Values</b></td><td><b>QBO Dates</b></td><td><b>QBO Valules</b></td><td><b>Reconcile?</b></td></tr>";
-  for (let i = iStart; i != iEnd && count < 10; i += increment) {
-    for (let j = jStart; j != jEnd && count < 10; j += increment) {
+  for (let i = iStart; i != iEnd && count < 3; i += increment) {
+    for (let j = jStart; j != jEnd && count < 3; j += increment) {
       if (map1[i].sum === map2[j].sum && map1[i].firstDate >= map2[j].firstDate && map1[i].lastDate >= map2[j].lastDate && isValid(map1[i].dates, map1[i].values, map2[j].dates, map2[j].values)) {
         console.log(map1[i].values, map2[j].values);
         output += "<tr><td>" + map1[i].dates.join("<br>") + "</td><td>" + map1[i].values.join("<br>") + "</td>";
