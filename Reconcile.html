@@ -13,9 +13,24 @@
 <td><b>Speed</b></td>
 <td>
 <select id="performanceLimit" style="width: 100%">
-<option value="1000">Flash (Less Accurate)</option>
+<option value="1000">Flash (Less Matches)</option>
 <option value="10000" selected>Fast</option>
-<option value="100000">Slow (More Accurate)</option>
+<option value="100000">Slow (More Matches)</option>
+</select>
+</td>
+<td><b>Display</b></td>
+<td>
+<select id="resultsCount" style="width: 100%">
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5" selected>5</option>
+<option value="6">6</option>
+<option value="7">7</option>
+<option value="8">8</option>
+<option value="9">9</option>
+<option value="10">10</option>
 </select>
 </td>
 </tr>
@@ -35,6 +50,7 @@ let map1 = [];
 let map2 = [];
 
 let performanceLimit = 0;
+let resultsCount = 0;
 
 function createDate(date) {
   let parts = date.split("/");
@@ -105,8 +121,8 @@ function isValid(bankDates, bankValues, qboDates, qboValues) {
 function printMatches(iStart, iEnd, jStart, jEnd, increment) {
   let count = 0;
   let output = "<table border='1' cellpadding='10'><tr><td><b>Bank Dates</b></td><td><b>Bank Values</b></td><td><b>QBO Dates</b></td><td><b>QBO Valules</b></td><td><b>Reconcile?</b></td></tr>";
-  for (let i = iStart; i != iEnd && count < 3; i += increment) {
-    for (let j = jStart; j != jEnd && count < 3; j += increment) {
+  for (let i = iStart; i != iEnd && count < resultsCount; i += increment) {
+    for (let j = jStart; j != jEnd && count < resultsCount; j += increment) {
       if (map1[i].sum === map2[j].sum && map1[i].firstDate >= map2[j].firstDate && map1[i].lastDate >= map2[j].lastDate && isValid(map1[i].dates, map1[i].values, map2[j].dates, map2[j].values)) {
         console.log(map1[i].values, map2[j].values);
         output += "<tr><td>" + map1[i].dates.join("<br>") + "</td><td>" + map1[i].values.join("<br>") + "</td>";
@@ -123,8 +139,10 @@ function printMatches(iStart, iEnd, jStart, jEnd, increment) {
 function go() {
 
     performanceLimit = parseInt(document.getElementById("performanceLimit").value, 10);
-	
 	console.log(performanceLimit);
+	
+	resultsCount = parseInt(document.getElementById("resultsCount").value, 10);
+	console.log(resultsCount);
 
     document.getElementById("results").innerHTML = "Loading...";
 
