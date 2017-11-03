@@ -35,7 +35,7 @@
 </td>
 </tr>
 <tr>
-<td colspan="4"><button style="width: 100%; height: 50px;" onclick="go()"><b>Go</b></button></td>
+<td colspan="4"><button id="goButton" disabled style="width: 100%; height: 50px;" onclick="go()"><b>Go</b></button></td>
 </tr>
 </table>
 <div id="results"></div>
@@ -231,6 +231,29 @@ function analyze() {
 
     console.log("********** complete **********");
 }
+
+setInterval(function validate() {
+	let tempBankDates = document.getElementById("bankDates").value.split("\n");
+    let tempBankValues = document.getElementById("bankValues").value.split("\n").map(function(value) {
+        return parseFloat(value.replace(",", ""));
+    });
+    
+    let tempQboDates = document.getElementById("qboDates").value.split("\n");
+    let tempQboValues = document.getElementById("qboValues").value.split("\n").map(function(value) {
+        return parseFloat(value.replace(",", ""));
+    });
+	
+	if(tempBankDates[0] === "" || 
+	   isNaN(tempBankValues[0]) || 
+	   tempQboDates[0] === "" ||
+	   isNaN(tempQboValues[0]) ||
+	   tempBankDates.length !== tempBankValues.length ||
+	   tempQboDates.length !== tempQboValues.length) {
+	    document.getElementById("goButton").disabled = true;
+	} else {
+	    document.getElementById("goButton").disabled = false;
+	}
+}, 1000);
 
 
 </script>
